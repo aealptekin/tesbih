@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tesbih & Zikirmatik</title>
+  
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#f2f2f7" id="theme-color-meta">
+  <link rel="apple-touch-icon" href="icon.png">
+
+  <style>
+    /* Temel iOS Font ve Değişkenler */
+    :root {
+      --bg-color: #f2f2f7;
+      --text-color: #000000;
+      --header-bg: rgba(255, 255, 255, 0.75);
+      --menu-bg: #ffffff;
+      --menu-overlay: rgba(0, 0, 0, 0.4);
+      --border-color: #c6c6c8;
+      
+      /* Tesbih Renkleri */
+      --color-1: #8b4513; /* Kahverengi */
+      --color-2: #2e8b57; /* Yeşil */
+      --color-3: #111111; /* Siyah */
+      --color-4: #4682b4; /* Mavi */
+      --active-bead: var(--color-1);
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #000000;
+      --text-color: #ffffff;
+      --header-bg: rgba(28, 28, 30, 0.75);
+      --menu-bg: #1c1c1e;
+      --border-color: #38383a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    body, html {
+      height: 100%;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      overflow: hidden;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    /* Üst Başlık (Header) */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 90px;
+      padding-top: 40px; /* Çentik (Notch) boşluğu */
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-left: 20px;
+      padding-right: 20px;
+      background: var(--header-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index: 10;
+      border-bottom: 0.5px solid var(--border-color);
+    }
+
+    #status-text {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+    }
+
+    #menu-btn {
+      background: none;
+      border: none;
+      color: var(--text-color);
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 5px;
+    }
+
+    /* Ana Ekran ve Tesbih Alanı */
+    main {
+      height: 100%;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end; /* İmameyi aşağıya yaslamak için */
+      padding-top: 90px;
+      position: relative;
+    }
+
+    #pull-area {
+      position: absolute;
+      top: 90px;
+      left: 0;
+      width: 100%;
+      height: calc(100% - 90px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 20px;
+      z-index: 5;
+    }
+
+    /* Tesbih Boncukları ve İmame (Ekranı Kaplar) */
+    .bead {
+      width: 80px;
+      height: 100px;
+      background-color: var(--active-bead);
+      border-radius: 40px;
+      margin-bottom: -15px; /* Boncukların birbirine geçmesi için */
+      box-shadow: inset -5px -5px 15px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.3);
+      transition: transform 0.2s ease-out, background-color 0.3s;
+    }
+
+    .imame {
+      width: 30px;
+      height: 180px;
+      background-color: var(--active-bead);
+      border-radius: 15px;
+      margin-top: 20px;
+      box-shadow: inset -3px -5px 10px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.3);
+      position: relative;
+      transition: background-color 0.3s;
+    }
+    
+    .imame::after {
+      content: '';
+      position: absolute;
+      bottom: -30px;
+      left: 5px;
+      width: 20px;
+      height: 40px;
+      background: var(--active-bead);
+      border-radius: 50%;
+      box-shadow: inset -2px -2px 5px rgba(0,0,0,0.5);
+    }
+
+    /* Menü (iOS Action Sheet Tarzı) */
+    #menu-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--menu-overlay);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      z-index: 100;
+    }
+
+    #menu-modal {
+      position: fixed;
+      bottom: -100%;
+      left: 0;
+      width: 100%;
+      background: var(--menu-bg);
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      padding: 20px;
+      transition: bottom 0.3s cubic-bezier(0.1, 0.8, 0.2, 1);
+      z-index: 101;
+      box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+    }
+
+    #menu-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #menu-modal.active {
+      bottom: 0;
+    }
+
+    .menu-item {
+      padding: 15px 0;
+      border-bottom: 0.5px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 17px;
+    }
+
+    .menu-item:last-child {
+      border-bottom: none;
+    }
+
+    .menu-btn-action {
+      background: #007aff;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .menu-btn-action.danger {
+      background: #ff3b30;
+    }
+
+    .color-options {
+      display: flex;
+      gap: 10px;
+    }
+
+    .color-circle {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 2px solid transparent;
+    }
+
+    .color-circle.selected {
+      border-color: #007aff;
+    }
+
+    #zikirmatik-input {
+      width: 80px;
+      padding: 5px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-color);
+      color: var(--text-color);
+      text-align: center;
+      font-size: 16px;
+    }
+
+    /* Animasyon Sınıfı */
+    .pull-anim {
+      transform: translateY(100px);
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="app">
+    <header>
+      <div id="status-text">Sübhânallah 0</div>
+      <button id="menu-btn">⋮</button>
+    </header>
+
+    <main>
+      <div id="pull-area">
+        <div class="bead" id="bead-3"></div>
+        <div class="bead" id="bead-2"></div>
+        <div class="bead" id="bead-1"></div>
+        <div class="imame"></div>
+      </div>
+    </main>
+
+    <div id="menu-overlay"></div>
+    <div id="menu-modal">
+      <div style="width: 40px; height: 5px; background: #c6c6c8; border-radius: 3px; margin: 0 auto 15px auto;"></div>
+      
+      <div class="menu-item">
+        <span>Tema (Aydınlık/Karanlık)</span>
+        <button id="theme-toggle" class="menu-btn-action">Değiştir</button>
+      </div>
+
+      <div class="menu-item">
+        <span>Tesbih Rengi</span>
+        <div class="color-options">
+          <div class="color-circle" style="background: var(--color-1);" data-color="1"></div>
+          <div class="color-circle" style="background: var(--color-2);" data-color="2"></div>
+          <div class="color-circle" style="background: var(--color-3);" data-color="3"></div>
+          <div class="color-circle" style="background: var(--color-4);" data-color="4"></div>
+        </div>
+      </div>
+
+      <div class="menu-item">
+        <span>Mod Seçimi</span>
+        <select id="mode-select" style="padding: 5px; border-radius: 8px; font-size: 16px;">
+          <option value="tesbih">Klasik Tesbih</option>
+          <option value="zikirmatik">Zikirmatik (Geri Sayım)</option>
+        </select>
+      </div>
+
+      <div class="menu-item" id="zikirmatik-settings" style="display: none;">
+        <span>Zikirmatik Başlangıç Sayısı</span>
+        <input type="number" id="zikirmatik-input" value="100">
+        <button id="set-zikirmatik" class="menu-btn-action">Ayarla</button>
+      </div>
+
+      <div class="menu-item">
+        <span>İşlem</span>
+        <button id="reset-btn" class="menu-btn-action danger">Başa Al / Sıfırla</button>
+      </div>
+      
+      <div class="menu-item" style="justify-content: center; padding-top: 25px;">
+        <button id="close-menu-btn" class="menu-btn-action" style="width: 100%; background: #e5e5ea; color: black;">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Varsayılan Uygulama Durumu (State)
+    let state = {
+      mode: 'tesbih', // 'tesbih' veya 'zikirmatik'
+      tesbihCount: 0,
+      zikirmatikTarget: 100,
+      zikirmatikCount: 100,
+      color: '1',
+      theme: 'light'
+    };
+
+    // Hafızadan Veri Çekme
+    function loadState() {
+      const saved = localStorage.getItem('tesbih_state');
+      if (saved) {
+        state = JSON.parse(saved);
+      }
+    }
+
+    // Hafızaya Veri Yazma
+    function saveState() {
+      localStorage.setItem('tesbih_state', JSON.stringify(state));
+    }
+
+    // DOM Elementleri
+    const statusText = document.getElementById('status-text');
+    const pullArea = document.getElementById('pull-area');
+    const bead1 = document.getElementById('bead-1');
+    const menuBtn = document.getElementById('menu-btn');
+    const menuOverlay = document.getElementById('menu-overlay');
+    const menuModal = document.getElementById('menu-modal');
+    const closeMenuBtn = document.getElementById('close-menu-btn');
+    const themeToggle = document.getElementById('theme-toggle');
+    const resetBtn = document.getElementById('reset-btn');
+    const colorCircles = document.querySelectorAll('.color-circle');
+    const modeSelect = document.getElementById('mode-select');
+    const zikirmatikSettings = document.getElementById('zikirmatik-settings');
+    const zikirmatikInput = document.getElementById('zikirmatik-input');
+    const setZikirmatikBtn = document.getElementById('set-zikirmatik');
+
+    // Arayüzü Güncelleme
+    function updateUI() {
+      // Temayı Uygula
+      document.body.setAttribute('data-theme', state.theme);
+      document.getElementById('theme-color-meta').content = state.theme === 'dark' ? '#000000' : '#f2f2f7';
+
+      // Rengi Uygula
+      document.documentElement.style.setProperty('--active-bead', `var(--color-${state.color})`);
+      colorCircles.forEach(c => {
+        if (c.dataset.color === state.color) c.classList.add('selected');
+        else c.classList.remove('selected');
+      });
+
+      // Menü Görünümleri
+      modeSelect.value = state.mode;
+      if (state.mode === 'zikirmatik') {
+        zikirmatikSettings.style.display = 'flex';
+      } else {
+        zikirmatikSettings.style.display = 'none';
+      }
+
+      // Üst Yazı (Status Text) Güncellemesi
+      if (state.mode === 'tesbih') {
+        let cycle = state.tesbihCount % 99;
+        let localCount = cycle % 33;
+        if (localCount === 0 && cycle !== 0) localCount = 33; 
+        if (state.tesbihCount === 0) localCount = 0;
+        else if (localCount === 0) localCount = 33;
+
+        let word = "Sübhânallah";
+        if (state.tesbihCount > 0) {
+          if (cycle > 0 && cycle <= 33) word = "Sübhânallah";
+          else if (cycle > 33 && cycle <= 66) word = "Elhamdülillâh";
+          else if (cycle > 66 || cycle === 0) word = "Allâhu ekber";
+        }
+        statusText.innerText = `${word} ${localCount}`;
+      } else {
+        statusText.innerText = `Zikirmatik ${state.zikirmatikCount}`;
+      }
+
+      saveState();
+    }
+
+    // Tesbih Çekme (Aşağı Kaydırma veya Tıklama) Mantığı
+    function handlePull() {
+      // Görsel Animasyon
+      bead1.classList.add('pull-anim');
+      setTimeout(() => {
+        bead1.classList.remove('pull-anim');
+      }, 200);
+
+      // Sayı İşlemleri
+      if (state.mode === 'tesbih') {
+        state.tesbihCount++;
+      } else if (state.mode === 'zikirmatik') {
+        if (state.zikirmatikCount > 0) {
+          state.zikirmatikCount--;
+        }
+      }
+      updateUI();
+    }
+
+    // Dokunmatik Kaydırma Algılama (Aşağı doğru)
+    let startY = 0;
+    let isSwiping = false;
+
+    pullArea.addEventListener('touchstart', (e) => {
+      startY = e.touches[0].clientY;
+      isSwiping = true;
+    }, {passive: true});
+
+    pullArea.addEventListener('touchmove', (e) => {
+      if (!isSwiping) return;
+      let currentY = e.touches[0].clientY;
+      if (currentY - startY > 50) { // 50px aşağı kaydırma
+        handlePull();
+        isSwiping = false; // Tek bir kaydırmada birden fazla saymaması için
+      }
+    }, {passive: true});
+
+    pullArea.addEventListener('touchend', () => {
+      isSwiping = false;
+    });
+
+    // Masaüstü Testi için Tıklama
+    pullArea.addEventListener('click', () => {
+      handlePull();
+    });
+
+    // Menü İşlemleri
+    function toggleMenu() {
+      menuOverlay.classList.toggle('active');
+      menuModal.classList.toggle('active');
+    }
+
+    menuBtn.addEventListener('click', toggleMenu);
+    closeMenuBtn.addEventListener('click', toggleMenu);
+    menuOverlay.addEventListener('click', toggleMenu);
+
+    themeToggle.addEventListener('click', () => {
+      state.theme = state.theme === 'light' ? 'dark' : 'light';
+      updateUI();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      if (state.mode === 'tesbih') {
+        state.tesbihCount = 0;
+      } else {
+        state.zikirmatikCount = state.zikirmatikTarget;
+      }
+      updateUI();
+      toggleMenu();
+    });
+
+    colorCircles.forEach(circle => {
+      circle.addEventListener('click', (e) => {
+        state.color = e.target.dataset.color;
+        updateUI();
+      });
+    });
+
+    modeSelect.addEventListener('change', (e) => {
+      state.mode = e.target.value;
+      updateUI();
+    });
+
+    setZikirmatikBtn.addEventListener('click', () => {
+      let val = parseInt(zikirmatikInput.value);
+      if (!isNaN(val) && val > 0) {
+        state.zikirmatikTarget = val;
+        state.zikirmatikCount = val;
+        updateUI();
+      }
+    });
+
+    // Uygulamayı Başlat
+    loadState();
+    zikirmatikInput.value = state.zikirmatikTarget;
+    updateUI();
+
+    // PWA Service Worker Kaydı
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js');
+      });
+    }
+  </script>
+</body>
+</html>
