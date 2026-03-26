@@ -334,7 +334,18 @@
     updateVisuals(false); 
     closeMenu(); 
   }
-  
+  // Service Worker Kaydı (PWA için)
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(registration => {
+          console.log('SW başarıyla kaydedildi:', registration.scope);
+        })
+        .catch(error => {
+          console.log('SW kaydı başarısız oldu:', error);
+        });
+    });
+  }
 
   window.onload = initApp;
   window.onresize = () => updateVisuals(false);
