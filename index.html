@@ -3,33 +3,29 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Tane Tane Tesbih</title>
+  <title>İpli Gerçekçi Tesbih</title>
   
-  <link rel="manifest" href="manifest.json">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
   <style>
     :root {
       --bg-color: #f2f2f7;
-      --text-color: #000000;
+      --text-color: #000;
       --header-bg: rgba(255, 255, 255, 0.85);
-      --border-color: #c6c6c8;
+      --string-color: #8b0000; /* Kırmızımsı ip rengi */
       
-      /* Kehribar Dokusu */
-      --c1: radial-gradient(circle at 35% 35%, #ffdb4d 0%, #f9a825 70%, #ef6c00 100%); 
-      --c2: radial-gradient(circle at 35% 35%, #a52a2a 0%, #7b1313 70%, #4a0000 100%); 
-      --c3: radial-gradient(circle at 35% 35%, #444 0%, #222 70%, #000 100%);      
-      --c4: radial-gradient(circle at 35% 35%, #66bb6a 0%, #388e3c 70%, #1b5e20 100%);
+      /* Renk Dokuları */
+      --c1: radial-gradient(circle at 35% 35%, #ffdb4d, #f9a825, #ef6c00); /* Sarı Kehribar */
+      --c2: radial-gradient(circle at 35% 35%, #a52a2a, #7b1313, #4a0000); /* Vişne */
+      --c3: radial-gradient(circle at 35% 35%, #444, #222, #000);          /* Siyah */
+      --c4: radial-gradient(circle at 35% 35%, #66bb6a, #388e3c, #1b5e20); /* Yeşil */
       
       --active-grad: var(--c1);
     }
 
     [data-theme="dark"] {
-      --bg-color: #000000;
-      --text-color: #ffffff;
+      --bg-color: #000;
+      --text-color: #fff;
       --header-bg: rgba(28, 28, 30, 0.85);
-      --border-color: #38383a;
+      --string-color: #555;
     }
 
     * { box-sizing: border-box; -webkit-user-select: none; touch-action: none; }
@@ -43,65 +39,72 @@
       padding: 50px 20px 10px; display: flex; justify-content: space-between;
       align-items: center; background: var(--header-bg);
       backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-      z-index: 100; border-bottom: 0.5px solid var(--border-color);
+      z-index: 100; border-bottom: 0.5px solid #c6c6c8;
     }
 
-    #status-title { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
-    #menu-trigger { font-size: 28px; cursor: pointer; padding: 5px; }
+    #status-title { font-size: 24px; font-weight: 700; }
 
-    /* Ana Sahne */
+    /* Tesbih Alanı */
     main {
       height: 100vh; width: 100vw; display: flex;
       align-items: center; justify-content: center;
+    }
+
+    /* İp Çizgisi */
+    #string-line {
+      position: absolute;
+      width: 3px;
+      height: 120%; /* Ekrandan taşsın */
+      background: var(--string-color);
+      box-shadow: 1px 0 2px rgba(0,0,0,0.2);
+      z-index: 1;
     }
 
     #beads-container {
       position: relative;
       width: 100%;
       height: 100%;
-      /* GPU hızlandırma için */
-      transform: translateZ(0); 
+      z-index: 2;
+      transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
     }
 
     .bead {
       position: absolute; 
-      /* Boncuklar daha da büyütüldü */
-      width: 50px; 
-      height: 60px; 
-      border-radius: 22px; 
+      left: 50%;
+      width: 55px;  /* Görseldeki gibi dolgun */
+      height: 65px; 
+      margin-left: -27.5px;
+      border-radius: 18px; /* Kapsül yapısı */
       background: var(--active-grad);
-      /* Belirgin 3D ve yuvarlaklık etkisi */
       box-shadow: 
-        4px 8px 15px rgba(0,0,0,0.4), 
-        inset -4px -6px 8px rgba(0,0,0,0.3), 
-        inset 4px 6px 10px rgba(255,255,255,0.4);
-      transition: background 0.3s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+        5px 10px 20px rgba(0,0,0,0.4), 
+        inset -4px -6px 10px rgba(0,0,0,0.3), 
+        inset 4px 6px 12px rgba(255,255,255,0.4);
     }
 
-    /* Menü Stilleri (Aynı kaldı) */
+    /* Menü */
+    #menu-btn { font-size: 28px; cursor: pointer; }
     #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; z-index: 200; }
     #menu {
       position: fixed; bottom: -100%; left: 0; width: 100%;
       background: var(--bg-color); border-radius: 20px 20px 0 0;
-      padding: 20px; z-index: 201; transition: 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);
+      padding: 20px; z-index: 201; transition: 0.4s;
       padding-bottom: env(safe-area-inset-bottom);
     }
-    .menu-row { padding: 18px 0; border-bottom: 0.5px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
-    .color-dot { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
-    .btn-ios { background: #007aff; color: #fff; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; font-size: 16px; }
+    .menu-row { padding: 15px 0; border-bottom: 0.5px solid #c6c6c8; display: flex; justify-content: space-between; align-items: center; }
+    .color-dot { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; }
+    .btn-ios { background: #007aff; color: #fff; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 600; }
   </style>
 </head>
 <body>
 
   <header>
     <div id="status-title">Sübhânallah 0</div>
-    <div id="menu-trigger">⋮</div>
+    <div id="menu-btn">⋮</div>
   </header>
 
   <main id="swipe-zone">
+    <div id="string-line"></div>
     <div id="beads-container"></div>
   </main>
 
@@ -109,11 +112,11 @@
   <div id="menu">
     <div class="menu-row">
       <span>Görünüm</span>
-      <button class="btn-ios" onclick="toggleTheme()">Değiştir</button>
+      <button class="btn-ios" onclick="toggleTheme()">Karanlık/Aydınlık</button>
     </div>
     <div class="menu-row">
       <span>Renk</span>
-      <div style="display:flex; gap:12px;">
+      <div style="display:flex; gap:10px;">
         <div class="color-dot" style="background:var(--c1)" onclick="setCol(1)"></div>
         <div class="color-dot" style="background:var(--c2)" onclick="setCol(2)"></div>
         <div class="color-dot" style="background:var(--c3)" onclick="setCol(3)"></div>
@@ -127,80 +130,71 @@
   </div>
 
 <script>
-  let state = JSON.parse(localStorage.getItem('tesbih_v5')) || {
+  let state = JSON.parse(localStorage.getItem('tesbih_v6')) || {
     count: 0, color: 1, theme: 'light'
   };
 
   const container = document.getElementById('beads-container');
   const title = document.getElementById('status-title');
   const totalBeads = 99;
+  const beadHeight = 65; // Boncuk boyu
+  const gap = 15;        // Boncuklar arası net boşluk (yaklaşık 1-2mm görsel karşılığı)
+  const stepHeight = beadHeight + gap;
 
-  // Boncukları oluştur
   function initBeads() {
     container.innerHTML = '';
     for (let i = 0; i < totalBeads; i++) {
       const b = document.createElement('div');
       b.className = 'bead';
+      // Boncukları dikey bir ip üzerine diziyoruz
+      b.style.top = `${i * stepHeight}px`;
       container.appendChild(b);
     }
+    updateVisuals(false);
   }
 
-  function updateVisuals() {
+  function updateVisuals(animate = true) {
     document.body.setAttribute('data-theme', state.theme);
     document.documentElement.style.setProperty('--active-grad', `var(--c${state.color})`);
     
-    const w = window.innerWidth;
-    const h = window.innerHeight;
+    // Konumu güncelle: Her sayışta tüm ip bir boncuk boyu aşağı kayar
+    const centerY = window.innerHeight / 2 - (beadHeight / 2);
+    const offset = centerY - (state.count * stepHeight);
     
-    // Elipsi ekran dışına hafif taşıracak kadar büyütüyoruz (99 boncuk sığsın diye)
-    // rX ve rY değerleri boncuklar arası 1mm (4-5px) boşluğu koruyacak şekilde hesaplandı
-    const rx = w * 0.45; 
-    const ry = h * 0.42; 
-    
-    const offsetAngle = (state.count / totalBeads) * Math.PI * 2;
-    const beads = container.getElementsByClassName('bead');
-    const angleStep = (2 * Math.PI) / totalBeads;
+    container.style.transition = animate ? "transform 0.3s cubic-bezier(0.23, 1, 0.32, 1)" : "none";
+    container.style.transform = `translate3d(0, ${offset}px, 0)`;
 
-    for (let i = 0; i < totalBeads; i++) {
-      const b = beads[i];
-      const angle = (i * angleStep) + offsetAngle - Math.PI / 2;
-      
-      const x = rx * Math.cos(angle);
-      const y = ry * Math.sin(angle);
-      
-      // Tam merkezleme ve GPU tabanlı taşıma
-      const posX = (w / 2) + x - 25; // 25 = bead width / 2
-      const posY = (h / 2) + y - 30; // 30 = bead height / 2
-
-      b.style.transform = `translate3d(${posX}px, ${posY}px, 0) rotate(${angle + Math.PI / 2}deg)`;
-    }
-
-    // Başlık Mantığı
+    // Başlık Yazısı (33'lük döngü)
     let subCount = state.count % 99;
     let phase = Math.floor(subCount / 33);
-    let step = (subCount % 33) || (subCount === 0 ? 0 : 33);
-    let text = phase === 0 ? "Sübhânallah" : phase === 1 ? "Elhamdülillâh" : "Allâhu ekber";
+    let step = (subCount % 33) || (subCount === 0 && state.count > 0 ? 33 : 0);
     
-    if(subCount === 0 && state.count > 0) { text = "Allâhu ekber"; step = 33; }
+    // 99 olduğunda başa dönme mantığı için ufak düzeltme
+    if (state.count > 0 && state.count % 99 === 0) {
+        text = "Allâhu ekber"; step = 33;
+    } else {
+        text = phase === 0 ? "Sübhânallah" : phase === 1 ? "Elhamdülillâh" : "Allâhu ekber";
+    }
+    
     title.innerText = `${text} ${step}`;
-    
-    localStorage.setItem('tesbih_v5', JSON.stringify(state));
+    localStorage.setItem('tesbih_v6', JSON.stringify(state));
   }
 
-  // Swipe Algılama
+  // Swipe / Çekme
   let startY = 0;
   document.getElementById('swipe-zone').addEventListener('touchstart', e => startY = e.touches[0].clientY);
   document.getElementById('swipe-zone').addEventListener('touchend', e => {
     let diff = e.changedTouches[0].clientY - startY;
-    if (Math.abs(diff) > 25) { 
+    if (diff > 30) { // Aşağı çekince döner
       state.count++;
+      if (state.count > 99) state.count = 1; // 99'dan sonra başa sar
       updateVisuals();
-      if ('vibrate' in navigator) navigator.vibrate(45);
+      if (navigator.vibrate) navigator.vibrate(40);
     }
   });
 
-  // Menü
-  document.getElementById('menu-trigger').onclick = () => {
+  // Menü İşlemleri
+  document.getElementById('menu-btn').onclick = () => {
     document.getElementById('overlay').style.display = 'block';
     document.getElementById('menu').style.bottom = '0';
   };
@@ -210,10 +204,10 @@
   }
   function setCol(n) { state.color = n; updateVisuals(); }
   function toggleTheme() { state.theme = state.theme === 'light' ? 'dark' : 'light'; updateVisuals(); }
-  function resetAll() { state.count = 0; updateVisuals(); closeMenu(); }
+  function resetAll() { state.count = 0; updateVisuals(false); closeMenu(); }
 
-  window.onload = () => { initBeads(); updateVisuals(); };
-  window.onresize = updateVisuals;
+  window.onload = initBeads;
+  window.onresize = () => updateVisuals(false);
 </script>
 </body>
 </html>
