@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Büyük Taneli Tesbih</title>
+  <title>Tane Tane Tesbih</title>
   
   <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,11 +16,11 @@
       --header-bg: rgba(255, 255, 255, 0.85);
       --border-color: #c6c6c8;
       
-      /* Kehribar Sarı Renk Dokusu (Yeni Görseldeki Gibi) */
-      --c1: radial-gradient(circle at 30% 30%, #ffeb3b, #fbc02d, #f57f17); 
-      --c2: radial-gradient(circle at 30% 30%, #8e2121, #4a0000); 
-      --c3: radial-gradient(circle at 30% 30%, #444, #000);      
-      --c4: radial-gradient(circle at 30% 30%, #52a352, #1b4d1b);
+      /* Kehribar Dokusu */
+      --c1: radial-gradient(circle at 35% 35%, #ffdb4d 0%, #f9a825 70%, #ef6c00 100%); 
+      --c2: radial-gradient(circle at 35% 35%, #a52a2a 0%, #7b1313 70%, #4a0000 100%); 
+      --c3: radial-gradient(circle at 35% 35%, #444 0%, #222 70%, #000 100%);      
+      --c4: radial-gradient(circle at 35% 35%, #66bb6a 0%, #388e3c 70%, #1b5e20 100%);
       
       --active-grad: var(--c1);
     }
@@ -32,7 +32,7 @@
       --border-color: #38383a;
     }
 
-    * { box-sizing: border-box; -webkit-user-select: none; outline: none; }
+    * { box-sizing: border-box; -webkit-user-select: none; touch-action: none; }
     body, html { 
       height: 100%; margin: 0; background: var(--bg-color); 
       color: var(--text-color); overflow: hidden; font-family: -apple-system, sans-serif;
@@ -46,48 +46,52 @@
       z-index: 100; border-bottom: 0.5px solid var(--border-color);
     }
 
-    #status-title { font-size: 24px; font-weight: 700; }
+    #status-title { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
     #menu-trigger { font-size: 28px; cursor: pointer; padding: 5px; }
 
-    /* Tesbih Alanı */
+    /* Ana Sahne */
     main {
       height: 100vh; width: 100vw; display: flex;
-      align-items: center; justify-content: center; position: relative;
-    }
-
-    #tesbih-stage {
-      position: relative; 
-      width: 100%; 
-      height: 100%;
-      display: flex; align-items: center; justify-content: center;
+      align-items: center; justify-content: center;
     }
 
     #beads-container {
-      position: absolute; width: 100%; height: 100%;
+      position: relative;
+      width: 100%;
+      height: 100%;
+      /* GPU hızlandırma için */
+      transform: translateZ(0); 
     }
 
     .bead {
       position: absolute; 
-      width: 32px; /* Boncukları büyüttüm */
-      height: 38px; /* Elips formunda büyük boncuklar */
-      border-radius: 40%; 
+      /* Boncuklar daha da büyütüldü */
+      width: 50px; 
+      height: 60px; 
+      border-radius: 22px; 
       background: var(--active-grad);
-      /* Gerçekçi kehribar efekti için katmanlı gölge */
-      box-shadow: 2px 5px 10px rgba(0,0,0,0.4), inset -3px -3px 6px rgba(0,0,0,0.3), inset 3px 3px 6px rgba(255,255,255,0.4);
+      /* Belirgin 3D ve yuvarlaklık etkisi */
+      box-shadow: 
+        4px 8px 15px rgba(0,0,0,0.4), 
+        inset -4px -6px 8px rgba(0,0,0,0.3), 
+        inset 4px 6px 10px rgba(255,255,255,0.4);
       transition: background 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    /* Menü ve Diğerleri */
+    /* Menü Stilleri (Aynı kaldı) */
     #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; z-index: 200; }
     #menu {
       position: fixed; bottom: -100%; left: 0; width: 100%;
       background: var(--bg-color); border-radius: 20px 20px 0 0;
-      padding: 20px; z-index: 201; transition: 0.4s;
+      padding: 20px; z-index: 201; transition: 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);
       padding-bottom: env(safe-area-inset-bottom);
     }
-    .menu-row { padding: 15px 0; border-bottom: 0.5px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
-    .color-dot { width: 35px; height: 35px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-    .btn-ios { background: #007aff; color: #fff; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 600; }
+    .menu-row { padding: 18px 0; border-bottom: 0.5px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+    .color-dot { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
+    .btn-ios { background: #007aff; color: #fff; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 600; font-size: 16px; }
   </style>
 </head>
 <body>
@@ -98,29 +102,23 @@
   </header>
 
   <main id="swipe-zone">
-    <div id="tesbih-stage">
-      <div id="beads-container"></div>
-    </div>
+    <div id="beads-container"></div>
   </main>
 
   <div id="overlay"></div>
   <div id="menu">
     <div class="menu-row">
       <span>Görünüm</span>
-      <button class="btn-ios" onclick="toggleTheme()">Karanlık/Aydınlık</button>
+      <button class="btn-ios" onclick="toggleTheme()">Değiştir</button>
     </div>
     <div class="menu-row">
-      <span>Tesbih Rengi</span>
-      <div style="display:flex; gap:10px;">
+      <span>Renk</span>
+      <div style="display:flex; gap:12px;">
         <div class="color-dot" style="background:var(--c1)" onclick="setCol(1)"></div>
         <div class="color-dot" style="background:var(--c2)" onclick="setCol(2)"></div>
         <div class="color-dot" style="background:var(--c3)" onclick="setCol(3)"></div>
         <div class="color-dot" style="background:var(--c4)" onclick="setCol(4)"></div>
       </div>
-    </div>
-    <div class="menu-row">
-      <span>Uygulama Modu</span>
-      <button class="btn-ios" onclick="toggleMode()" id="mode-btn">Zikirmatik Modu</button>
     </div>
     <div class="menu-row">
       <button class="btn-ios" style="background:#ff3b30; width:100%" onclick="resetAll()">Sıfırla</button>
@@ -129,14 +127,15 @@
   </div>
 
 <script>
-  let state = JSON.parse(localStorage.getItem('tesbih_v4')) || {
-    count: 0, color: 1, theme: 'light', mode: 'tesbih', zikirTarget: 0
+  let state = JSON.parse(localStorage.getItem('tesbih_v5')) || {
+    count: 0, color: 1, theme: 'light'
   };
 
   const container = document.getElementById('beads-container');
   const title = document.getElementById('status-title');
   const totalBeads = 99;
 
+  // Boncukları oluştur
   function initBeads() {
     container.innerHTML = '';
     for (let i = 0; i < totalBeads; i++) {
@@ -150,9 +149,13 @@
     document.body.setAttribute('data-theme', state.theme);
     document.documentElement.style.setProperty('--active-grad', `var(--c${state.color})`);
     
-    // Ekran boyutuna göre elipsi ayarla
-    const rx = window.innerWidth * 0.4; 
-    const ry = window.innerHeight * 0.35; 
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    
+    // Elipsi ekran dışına hafif taşıracak kadar büyütüyoruz (99 boncuk sığsın diye)
+    // rX ve rY değerleri boncuklar arası 1mm (4-5px) boşluğu koruyacak şekilde hesaplandı
+    const rx = w * 0.45; 
+    const ry = h * 0.42; 
     
     const offsetAngle = (state.count / totalBeads) * Math.PI * 2;
     const beads = container.getElementsByClassName('bead');
@@ -160,42 +163,39 @@
 
     for (let i = 0; i < totalBeads; i++) {
       const b = beads[i];
-      // Açı ve mesafe (Boşluklar burada angleStep ile sağlanıyor)
       const angle = (i * angleStep) + offsetAngle - Math.PI / 2;
+      
       const x = rx * Math.cos(angle);
       const y = ry * Math.sin(angle);
       
-      const centerX = window.innerWidth / 2;
-      const centerY = window.innerHeight / 2;
+      // Tam merkezleme ve GPU tabanlı taşıma
+      const posX = (w / 2) + x - 25; // 25 = bead width / 2
+      const posY = (h / 2) + y - 30; // 30 = bead height / 2
 
-      // translate3d kullanımı performans için daha iyidir
-      b.style.transform = `translate3d(${centerX + x - 16}px, ${centerY + y - 19}px, 0) rotate(${angle + Math.PI / 2}deg)`;
+      b.style.transform = `translate3d(${posX}px, ${posY}px, 0) rotate(${angle + Math.PI / 2}deg)`;
     }
 
-    // Başlık
-    if(state.mode === 'tesbih') {
-      let subCount = state.count % 99;
-      let phase = Math.floor(subCount / 33);
-      let step = (subCount % 33) || (subCount === 0 ? 0 : 33);
-      let text = phase === 0 ? "Sübhânallah" : phase === 1 ? "Elhamdülillâh" : "Allâhu ekber";
-      if(subCount === 0 && state.count > 0) { text = "Allâhu ekber"; step = 33; }
-      title.innerText = `${text} ${step}`;
-    } else {
-      title.innerText = `Kalan: ${state.zikirTarget}`;
-    }
+    // Başlık Mantığı
+    let subCount = state.count % 99;
+    let phase = Math.floor(subCount / 33);
+    let step = (subCount % 33) || (subCount === 0 ? 0 : 33);
+    let text = phase === 0 ? "Sübhânallah" : phase === 1 ? "Elhamdülillâh" : "Allâhu ekber";
     
-    localStorage.setItem('tesbih_v4', JSON.stringify(state));
+    if(subCount === 0 && state.count > 0) { text = "Allâhu ekber"; step = 33; }
+    title.innerText = `${text} ${step}`;
+    
+    localStorage.setItem('tesbih_v5', JSON.stringify(state));
   }
 
-  // Sürükleme (Swipe)
+  // Swipe Algılama
   let startY = 0;
   document.getElementById('swipe-zone').addEventListener('touchstart', e => startY = e.touches[0].clientY);
   document.getElementById('swipe-zone').addEventListener('touchend', e => {
     let diff = e.changedTouches[0].clientY - startY;
-    if (Math.abs(diff) > 30) { 
+    if (Math.abs(diff) > 25) { 
       state.count++;
       updateVisuals();
-      if ('vibrate' in navigator) navigator.vibrate(40);
+      if ('vibrate' in navigator) navigator.vibrate(45);
     }
   });
 
@@ -211,10 +211,6 @@
   function setCol(n) { state.color = n; updateVisuals(); }
   function toggleTheme() { state.theme = state.theme === 'light' ? 'dark' : 'light'; updateVisuals(); }
   function resetAll() { state.count = 0; updateVisuals(); closeMenu(); }
-  function toggleMode() {
-      state.mode = state.mode === 'tesbih' ? 'zikir' : 'tesbih';
-      updateVisuals();
-  }
 
   window.onload = () => { initBeads(); updateVisuals(); };
   window.onresize = updateVisuals;
