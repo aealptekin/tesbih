@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Tesbih & Zikirmatik</title>
   
   <link rel="manifest" href="manifest.json">
@@ -21,11 +21,11 @@
       --menu-overlay: rgba(0, 0, 0, 0.4);
       --border-color: #c6c6c8;
       
-      /* Tesbih Renkleri */
-      --color-1: #8b4513; /* Kahverengi */
-      --color-2: #2e8b57; /* Yeşil */
-      --color-3: #111111; /* Siyah */
-      --color-4: #4682b4; /* Mavi */
+      /* Tesbih Renkleri (Görseldeki mermer desenli sarı dahil) */
+      --color-1: linear-gradient(135deg, #FFD700 0%, #FFB90F 100%), #FFD700; /* Mermerli Sarı */
+      --color-2: linear-gradient(135deg, #2e8b57 0%, #1e5a38 100%), #2e8b57; /* Yeşil */
+      --color-3: linear-gradient(135deg, #111111 0%, #333333 100%), #111111; /* Siyah */
+      --color-4: linear-gradient(135deg, #4682b4 0%, #29557b 100%), #4682b4; /* Mavi */
       --active-bead: var(--color-1);
     }
 
@@ -44,6 +44,7 @@
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       user-select: none;
       -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
 
     body, html {
@@ -54,6 +55,13 @@
       transition: background-color 0.3s, color 0.3s;
     }
 
+    /* iOS Bulanıklık Efekti için Kapsayıcı */
+    #app {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+
     /* Üst Başlık (Header) */
     header {
       position: fixed;
@@ -61,7 +69,7 @@
       left: 0;
       width: 100%;
       height: 90px;
-      padding-top: 40px; /* Çentik (Notch) boşluğu */
+      padding-top: calc(40px + env(safe-area-inset-top)); /* Çentik boşluğu */
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -90,64 +98,75 @@
       padding: 5px;
     }
 
-    /* Ana Ekran ve Tesbih Alanı */
+    /* Ana Ekran ve Elips Tesbih Alanı */
     main {
+      flex: 1;
+      position: relative;
+      margin-top: 90px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #tesbih-container {
+      position: relative;
+      width: 80%;
+      height: 70%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Elips Yörünge */
+    #tesbih-orbit {
+      position: absolute;
+      width: 100%;
       height: 100%;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-end; /* İmameyi aşağıya yaslamak için */
-      padding-top: 90px;
-      position: relative;
+      border-radius: 50% / 30%; /* Elips şekli */
     }
 
-    #pull-area {
+    /* Boncuk Kapsayıcı (Burada 33 boncuk oluşturulacak) */
+    #boncuklar {
       position: absolute;
-      top: 90px;
-      left: 0;
       width: 100%;
-      height: calc(100% - 90px);
+      height: 100%;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      justify-content: flex-end;
-      padding-bottom: 20px;
-      z-index: 5;
+      justify-content: center;
     }
 
-    /* Tesbih Boncukları ve İmame (Ekranı Kaplar) */
+    /* Boncuklar */
     .bead {
-      width: 80px;
-      height: 100px;
-      background-color: var(--active-bead);
-      border-radius: 40px;
-      margin-bottom: -15px; /* Boncukların birbirine geçmesi için */
-      box-shadow: inset -5px -5px 15px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.3);
-      transition: transform 0.2s ease-out, background-color 0.3s;
+      position: absolute;
+      width: 20px; /* Görseldeki gibi daha küçük */
+      height: 25px;
+      background-image: var(--active-bead);
+      border-radius: 8px; /* Dikdörtgenimsi, yuvarlak köşeli */
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.4); /* Parlaklık ve gölge */
+      transition: transform 0.2s ease-out, background-image 0.3s;
     }
 
+    /* İmame */
     .imame {
-      width: 30px;
-      height: 180px;
-      background-color: var(--active-bead);
-      border-radius: 15px;
-      margin-top: 20px;
-      box-shadow: inset -3px -5px 10px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.3);
-      position: relative;
-      transition: background-color 0.3s;
-    }
-    
-    .imame::after {
-      content: '';
       position: absolute;
-      bottom: -30px;
-      left: 5px;
-      width: 20px;
-      height: 40px;
-      background: var(--active-bead);
+      width: 15px;
+      height: 60px;
+      background-image: var(--active-bead);
+      border-radius: 8px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.4);
+      z-index: 2;
+    }
+
+    /* Püskül */
+    .pusul {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background-color: #8b0000; /* Koyu kırmızı */
       border-radius: 50%;
-      box-shadow: inset -2px -2px 5px rgba(0,0,0,0.5);
+      border: 1px solid #c0c0c0; /* Metal halka */
+      z-index: 3;
     }
 
     /* Menü (iOS Action Sheet Tarzı) */
@@ -173,6 +192,7 @@
       border-top-left-radius: 20px;
       border-top-right-radius: 20px;
       padding: 20px;
+      padding-bottom: calc(20px + env(safe-area-inset-bottom));
       transition: bottom 0.3s cubic-bezier(0.1, 0.8, 0.2, 1);
       z-index: 101;
       box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
@@ -224,6 +244,7 @@
       height: 30px;
       border-radius: 50%;
       border: 2px solid transparent;
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.4);
     }
 
     .color-circle.selected {
@@ -243,8 +264,8 @@
 
     /* Animasyon Sınıfı */
     .pull-anim {
-      transform: translateY(100px);
-      opacity: 0;
+      transform: scale(0.9);
+      opacity: 0.7;
     }
   </style>
 </head>
@@ -257,11 +278,12 @@
     </header>
 
     <main>
-      <div id="pull-area">
-        <div class="bead" id="bead-3"></div>
-        <div class="bead" id="bead-2"></div>
-        <div class="bead" id="bead-1"></div>
-        <div class="imame"></div>
+      <div id="tesbih-container">
+        <div id="tesbih-orbit"></div>
+        <div id="boncuklar">
+          </div>
+        <div class="imame" id="imame"></div>
+        <div class="pusul" id="pusul"></div>
       </div>
     </main>
 
@@ -277,10 +299,10 @@
       <div class="menu-item">
         <span>Tesbih Rengi</span>
         <div class="color-options">
-          <div class="color-circle" style="background: var(--color-1);" data-color="1"></div>
-          <div class="color-circle" style="background: var(--color-2);" data-color="2"></div>
-          <div class="color-circle" style="background: var(--color-3);" data-color="3"></div>
-          <div class="color-circle" style="background: var(--color-4);" data-color="4"></div>
+          <div class="color-circle" style="background-image: var(--color-1);" data-color="1"></div>
+          <div class="color-circle" style="background-image: var(--color-2);" data-color="2"></div>
+          <div class="color-circle" style="background-image: var(--color-3);" data-color="3"></div>
+          <div class="color-circle" style="background-image: var(--color-4);" data-color="4"></div>
         </div>
       </div>
 
@@ -335,8 +357,10 @@
 
     // DOM Elementleri
     const statusText = document.getElementById('status-text');
-    const pullArea = document.getElementById('pull-area');
-    const bead1 = document.getElementById('bead-1');
+    const tesbihContainer = document.getElementById('tesbih-container');
+    const boncuklarContainer = document.getElementById('boncuklar');
+    const imame = document.getElementById('imame');
+    const pusul = document.getElementById('pusul');
     const menuBtn = document.getElementById('menu-btn');
     const menuOverlay = document.getElementById('menu-overlay');
     const menuModal = document.getElementById('menu-modal');
@@ -348,6 +372,27 @@
     const zikirmatikSettings = document.getElementById('zikirmatik-settings');
     const zikirmatikInput = document.getElementById('zikirmatik-input');
     const setZikirmatikBtn = document.getElementById('set-zikirmatik');
+
+    // 33 Boncuk Oluşturma ve Elips Üzerine Yerleştirme
+    function createTesbih() {
+      const rx = tesbihContainer.offsetWidth / 2;
+      const ry = tesbihContainer.offsetHeight / 2 * 0.3; // Elipsin y-yarıçapı
+      const angleStep = (2 * Math.PI) / 33;
+
+      for (let i = 0; i < 33; i++) {
+        const bead = document.createElement('div');
+        bead.classList.add('bead');
+        const angle = i * angleStep;
+        const x = rx + rx * Math.cos(angle - Math.PI / 2) - 10; // -10 boncuk x-merkezleme
+        const y = ry + ry * Math.sin(angle - Math.PI / 2) - 12.5; // -12.5 boncuk y-merkezleme
+        bead.style.transform = `translate(${x}px, ${y}px)`;
+        boncuklarContainer.appendChild(bead);
+      }
+
+      // İmame ve Püskül Yerleşimi (Elipsin Üst Kısmında)
+      imame.style.transform = `translate(${rx - 7.5}px, ${ry - 30}px)`; // -7.5 x-merkezleme, -30 y-merkezleme
+      pusul.style.transform = `translate(${rx - 5}px, ${ry - 40}px)`; // -5 x-merkezleme, -40 y-merkezleme
+    }
 
     // Arayüzü Güncelleme
     function updateUI() {
@@ -392,12 +437,12 @@
       saveState();
     }
 
-    // Tesbih Çekme (Aşağı Kaydırma veya Tıklama) Mantığı
+    // Tesbih Çekme (Aşağı Kaydırma) Mantığı
     function handlePull() {
-      // Görsel Animasyon
-      bead1.classList.add('pull-anim');
+      // Görsel Animasyon (Tüm tesbih scale olur)
+      tesbihContainer.classList.add('pull-anim');
       setTimeout(() => {
-        bead1.classList.remove('pull-anim');
+        tesbihContainer.classList.remove('pull-anim');
       }, 200);
 
       // Sayı İşlemleri
@@ -415,12 +460,12 @@
     let startY = 0;
     let isSwiping = false;
 
-    pullArea.addEventListener('touchstart', (e) => {
+    tesbihContainer.addEventListener('touchstart', (e) => {
       startY = e.touches[0].clientY;
       isSwiping = true;
     }, {passive: true});
 
-    pullArea.addEventListener('touchmove', (e) => {
+    tesbihContainer.addEventListener('touchmove', (e) => {
       if (!isSwiping) return;
       let currentY = e.touches[0].clientY;
       if (currentY - startY > 50) { // 50px aşağı kaydırma
@@ -429,12 +474,12 @@
       }
     }, {passive: true});
 
-    pullArea.addEventListener('touchend', () => {
+    tesbihContainer.addEventListener('touchend', () => {
       isSwiping = false;
     });
 
     // Masaüstü Testi için Tıklama
-    pullArea.addEventListener('click', () => {
+    tesbihContainer.addEventListener('click', () => {
       handlePull();
     });
 
@@ -487,6 +532,7 @@
     // Uygulamayı Başlat
     loadState();
     zikirmatikInput.value = state.zikirmatikTarget;
+    createTesbih();
     updateUI();
 
     // PWA Service Worker Kaydı
