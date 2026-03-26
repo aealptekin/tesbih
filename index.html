@@ -58,12 +58,16 @@
     #tesbih-stage {
       position: relative; width: 320px; height: 480px;
       display: flex; align-items: center; justify-content: center;
-      transition: transform 0.3s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+    }
+
+    #beads-container {
+      position: absolute; width: 100%; height: 100%;
     }
 
     .bead {
-      position: absolute; width: 22px; height: 26px;
-      border-radius: 12px; background: var(--active-grad);
+      position: absolute; width: 18px; height: 22px;
+      border-radius: 50%; /* Daha yuvarlak */
+      background: var(--active-grad);
       box-shadow: 2px 4px 6px rgba(0,0,0,0.4), inset -2px -2px 4px rgba(0,0,0,0.3);
       transition: background 0.3s;
     }
@@ -153,7 +157,7 @@
   </div>
 
 <script>
-  let state = JSON.parse(localStorage.getItem('tesbih_v2')) || {
+  let state = JSON.parse(localStorage.getItem('tesbih_v3')) || {
     count: 0, color: 2, theme: 'light', mode: 'tesbih', zikirTarget: 0
   };
 
@@ -165,28 +169,46 @@
 
   function initBeads() {
     container.innerHTML = '';
-    const rx = 130, ry = 200; // Elips yarıçapları
     for (let i = 0; i < totalBeads; i++) {
       const b = document.createElement('div');
       b.className = 'bead';
-      // Boncukları dairesel diz
-      const angle = (i / totalBeads) * Math.PI * 2;
-      const x = rx * Math.sin(angle);
-      const y = ry * Math.cos(angle);
-      b.style.left = `${160 + x - 11}px`;
-      b.style.top = `${240 + y - 13}px`;
-      b.style.transform = `rotate(${-angle}deg)`;
       container.appendChild(b);
     }
   }
 
-  function updateVisuals() {
+  function updateVisuals(tempOffset = 0) {
     document.body.setAttribute('data-theme', state.theme);
     document.documentElement.style.setProperty('--active-grad', `var(--c${state.color})`);
     
-    // Tesbihin Dönüş Açısı (99 boncukta tam tur)
-    const rotation = (state.count / totalBeads) * 360;
-    stage.style.transform = `rotate(${rotation}deg)`;
+    // Elips yarıçapları (Boşlukları artırmak için artırıldı)
+    const rx = 140, ry = 210; 
+    
+    // Tesbihin mevcut açısal pozisyonu (tempOffset sürükleme animasyonu için)
+    const currentStep = (state.count % totalBeads) + tempOffset;
+    const offsetAngle = (currentStep / totalBeads) * Math.PI * 2;
+
+    const beads = container.getElementsByClassName('bead');
+    const angleStep = (2 * Math.PI) / totalBeads;
+
+    for (let i = 0; i < totalBeads; i++) {
+      const b = beads[i];
+      // Boncuk açısı (ofset ile kaydırılmış)
+      const angle = (i * angleStep) + offsetAngle - Math.PI / 2;
+      const x = rx * Math.cos(angle);
+      const y = ry * Math.sin(angle);
+      
+      // Boncuk merkezleme
+      const bx = 160 + x - 9;
+      const by = 240 + y - 11;
+      
+      b.style.transform = `translate(${bx}px, ${by}px) rotate(${angle + Math.PI / 2}deg)`;
+    }
+
+    // İmame konumu (Her zaman en üstte kalacak şekilde ters döner)
+    const imameAngle = offsetAngle - Math.PI / 2;
+    const ix = 160 + rx * Math.cos(imameAngle) - 9;
+    const iy = 240 + ry * Math.sin(imameAngle) - 35; // İmame merkezleme
+    imame.style.transform = `translate(${ix}px, ${iy}px) rotate(${imameAngle + Math.PI / 2}deg)`;
 
     // Başlık Metni
     if(state.mode === 'tesbih') {
@@ -199,11 +221,8 @@
     } else {
       title.innerText = `Kalan: ${state.zikirTarget}`;
     }
-
-    // İmame konumu (Her zaman en altta kalacak şekilde ters döner)
-    imame.style.transform = `translateY(200px) rotate(${-rotation}deg)`;
     
-    localStorage.setItem('tesbih_v2', JSON.stringify(state));
+    localStorage.setItem('tesbih_v3', JSON.stringify(state));
   }
 
   // Çekme İşlemi
