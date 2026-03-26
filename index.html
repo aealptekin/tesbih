@@ -65,7 +65,6 @@
       width: 100%;
       height: 100%;
       z-index: 2;
-      transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
     }
 
     .bead {
@@ -92,8 +91,8 @@
       padding-bottom: env(safe-area-inset-bottom);
     }
     .menu-row { padding: 15px 0; border-bottom: 0.5px solid #c6c6c8; display: flex; justify-content: space-between; align-items: center; }
-    .color-dot { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; }
-    .btn-ios { background: #007aff; color: #fff; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 600; }
+    .color-dot { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #fff; cursor: pointer;}
+    .btn-ios { background: #007aff; color: #fff; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 600; cursor: pointer;}
   </style>
 </head>
 <body>
@@ -138,16 +137,18 @@
   const title = document.getElementById('status-title');
   const totalBeads = 99;
   const beadHeight = 65; // Boncuk boyu
-  const gap = 15;        // Boncuklar arası net boşluk (yaklaşık 1-2mm görsel karşılığı)
-  const stepHeight = beadHeight + gap;
+  const gap = 15;        // Boncuklar arası net boşluk
+  const stepHeight = beadHeight + gap; // 80px
+  const dropDistance = 115; // Çekilen tesbihin atlayacağı mesafe
 
   function initBeads() {
     container.innerHTML = '';
     for (let i = 0; i < totalBeads; i++) {
       const b = document.createElement('div');
       b.className = 'bead';
-      // Boncukları dikey bir ip üzerine diziyoruz
-      b.style.top = `${i * stepHeight}px`;
+      // Boncukları ekranın yukarısına doğru diziyoruz (- değerler)
+      // i=0 olan boncuk en alttaki "sıradaki" boncuk olur
+      b.style.top = `${-i * stepHeight}px`;
       container.appendChild(b);
     }
     updateVisuals(false);
@@ -157,19 +158,32 @@
     document.body.setAttribute('data-theme', state.theme);
     document.documentElement.style.setProperty('--active-grad', `var(--c${state.color})`);
     
-    // Konumu güncelle: Her sayışta tüm ip bir boncuk boyu aşağı kayar
-    const centerY = window.innerHeight / 2 - (beadHeight / 2);
-    const offset = centerY - (state.count * stepHeight);
+    const centerY = window.innerHeight / 2;
+    // Ortadaki 2 tesbihlik (yaklaşık 130px) boşluğun ekrana kusursuz hizalanması
+    const containerOffset = centerY - 130 + (state.count * stepHeight);
     
     container.style.transition = animate ? "transform 0.3s cubic-bezier(0.23, 1, 0.32, 1)" : "none";
-    container.style.transform = `translate3d(0, ${offset}px, 0)`;
+    container.style.transform = `translate3d(0, ${containerOffset}px, 0)`;
+
+    // Tesbih tanelerinin konumları
+    const beads = document.querySelectorAll('.bead');
+    beads.forEach((bead, i) => {
+      bead.style.transition = animate ? "transform 0.3s cubic-bezier(0.23, 1, 0.32, 1)" : "none";
+      if (i < state.count) {
+        // Çekilmiş (sayılmış) olanlar boşluğu atlayıp aşağı düşer
+        bead.style.transform = `translate3d(0, ${dropDistance}px, 0)`;
+      } else {
+        // Henüz çekilmemiş olanlar yukarıda bekler
+        bead.style.transform = `translate3d(0, 0, 0)`;
+      }
+    });
 
     // Başlık Yazısı (33'lük döngü)
     let subCount = state.count % 99;
     let phase = Math.floor(subCount / 33);
     let step = (subCount % 33) || (subCount === 0 && state.count > 0 ? 33 : 0);
+    let text = "";
     
-    // 99 olduğunda başa dönme mantığı için ufak düzeltme
     if (state.count > 0 && state.count % 99 === 0) {
         text = "Allâhu ekber"; step = 33;
     } else {
@@ -180,14 +194,15 @@
     localStorage.setItem('tesbih_v6', JSON.stringify(state));
   }
 
-  // Swipe / Çekme
+  // Swipe / Çekme İşlemi
   let startY = 0;
   document.getElementById('swipe-zone').addEventListener('touchstart', e => startY = e.touches[0].clientY);
   document.getElementById('swipe-zone').addEventListener('touchend', e => {
     let diff = e.changedTouches[0].clientY - startY;
-    if (diff > 30) { // Aşağı çekince döner
+    if (diff > 30) { // Aşağı çekince
       state.count++;
-      if (state.count > 99) state.count = 1; // 99'dan sonra başa sar
+      // 99'u geçince boncukların başa dönmesi için 0'a eşitliyoruz
+      if (state.count > 99) state.count = 0; 
       updateVisuals();
       if (navigator.vibrate) navigator.vibrate(40);
     }
