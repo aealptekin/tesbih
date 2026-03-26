@@ -72,8 +72,8 @@
       display: none; align-items: center; justify-content: center; flex-direction: column;
     }
     #zikir-circle {
-      width: 180px; height: 180px; border-radius: 50%; /* Biraz küçültüldü */
-      margin-top: 120px; /* Başlığın altına daha fazla boşluk bırakıldı */
+      width: 180px; height: 180px; border-radius: 50%;
+      margin-top: 120px; 
       background: var(--active-grad);
       box-shadow: 0 15px 35px rgba(0,0,0,0.3), inset -5px -10px 20px rgba(0,0,0,0.3), inset 5px 10px 20px rgba(255,255,255,0.3);
       display: flex; align-items: center; justify-content: center;
@@ -86,7 +86,7 @@
     }
 
     /* === MENÜ === */
-    #menu-btn { font-size: 28px; cursor: pointer; padding: 0 10px; z-index: 101; /* Menü butonunun her zaman üstte olmasını sağlar */}
+    #menu-btn { font-size: 28px; cursor: pointer; padding: 0 10px; z-index: 101; }
     #overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; z-index: 200; }
     #menu {
       position: fixed; bottom: -100%; left: 0; width: 100%;
@@ -110,7 +110,6 @@
   </header>
 
   <main id="swipe-zone">
-    
     <div id="tesbih-view">
       <div id="string-line"></div>
       <div id="beads-container"></div>
@@ -119,7 +118,6 @@
     <div id="zikirmatik-view">
       <div id="zikir-circle" onclick="handleZikirmatikTap()">99</div>
     </div>
-
   </main>
 
   <div id="overlay"></div>
@@ -128,7 +126,6 @@
       <span>Mod</span>
       <button class="btn-ios" id="mode-btn" onclick="toggleMode()" style="background:#34c759;">Tesbih</button>
     </div>
-    
     <div class="menu-row" id="zikir-settings" style="display:none;">
       <span>Hedef Sayı</span>
       <div style="display:flex; gap:10px;">
@@ -136,7 +133,6 @@
         <button class="btn-ios" onclick="saveZikirTarget()">Ayarla</button>
       </div>
     </div>
-
     <div class="menu-row">
       <span>Görünüm</span>
       <button class="btn-ios" onclick="toggleTheme()">Karanlık/Aydınlık</button>
@@ -157,9 +153,8 @@
   </div>
 
 <script>
-  // Varsayılan ayarları eski kaydedilmiş ayarlarla birleştiriyoruz
   const defaultState = { count: 0, color: 1, theme: 'light', mode: 'tesbih', zikirTarget: 99, zikirCount: 99 };
-  let savedState = JSON.parse(localStorage.getItem('tesbih_v7')) || {};
+  let savedState = JSON.parse(localStorage.getItem('tesbih_v8')) || {};
   let state = { ...defaultState, ...savedState };
 
   const container = document.getElementById('beads-container');
@@ -170,8 +165,33 @@
   const stepHeight = beadHeight + gap; 
   const dropDistance = 115; 
 
+  // --- SES ÜRETİCİ (BİP SESİ) ---
+  let audioCtx;
+  function playBeep() {
+    try {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      
+      oscillator.type = 'sine'; // Yumuşak bir ses tonu
+      oscillator.frequency.setValueAtTime(600, audioCtx.currentTime); // Sesin frekansı/inceliği
+      
+      gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2); // Sesi yavaşça kısar
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.2);
+    } catch (e) { console.log("Ses çalınamadı", e); }
+  }
+
   function initApp() {
-    // Tesbih boncuklarını oluştur
     container.innerHTML = '';
     for (let i = 0; i < totalBeads; i++) {
       const b = document.createElement('div');
@@ -179,27 +199,21 @@
       b.style.top = `${-i * stepHeight}px`;
       container.appendChild(b);
     }
-    
-    // Zikirmatik input'una kayıtlı hedefi yaz
     document.getElementById('zikir-input').value = state.zikirTarget;
-    
     updateVisuals(false);
   }
 
   function updateVisuals(animate = true) {
-    // Tema ve Renk
     document.body.setAttribute('data-theme', state.theme);
     document.documentElement.style.setProperty('--active-grad', `var(--c${state.color})`);
     
     if (state.mode === 'tesbih') {
-      // Menü ve Görünüm ayarlamaları
       document.getElementById('tesbih-view').style.display = 'flex';
       document.getElementById('zikirmatik-view').style.display = 'none';
       document.getElementById('mode-btn').innerText = 'Mod: Tesbih';
       document.getElementById('mode-btn').style.background = '#34c759';
       document.getElementById('zikir-settings').style.display = 'none';
 
-      // Boncukların Hareketi
       const centerY = window.innerHeight / 2;
       const containerOffset = centerY - 130 + (state.count * stepHeight);
       
@@ -216,7 +230,6 @@
         }
       });
 
-      // Tesbih Başlığı
       let subCount = state.count % 99;
       let phase = Math.floor(subCount / 33);
       let step = (subCount % 33) || (subCount === 0 && state.count > 0 ? 33 : 0);
@@ -226,11 +239,10 @@
       title.innerText = `${text} ${step}`;
 
     } else {
-      // ZİKİRMATİK MODU
       document.getElementById('tesbih-view').style.display = 'none';
       document.getElementById('zikirmatik-view').style.display = 'flex';
       document.getElementById('mode-btn').innerText = 'Mod: Zikirmatik';
-      document.getElementById('mode-btn').style.background = '#ff9500'; /* Zikirmatik için turuncu renk */
+      document.getElementById('mode-btn').style.background = '#ff9500'; 
       document.getElementById('zikir-settings').style.display = 'flex';
 
       document.getElementById('zikir-circle').innerText = state.zikirCount;
@@ -242,11 +254,10 @@
       }
     }
 
-    // Her durumda kaydet
-    localStorage.setItem('tesbih_v7', JSON.stringify(state));
+    localStorage.setItem('tesbih_v8', JSON.stringify(state));
   }
 
-  // --- ETKİLEŞİMLER (Swipe ve Dokunma) ---
+  // --- ETKİLEŞİMLER ---
   let startTime = 0, startY = 0, startX = 0;
   document.getElementById('swipe-zone').addEventListener('touchstart', e => {
     startTime = Date.now();
@@ -259,38 +270,46 @@
     let diffX = e.changedTouches[0].clientX - startX;
     let diffY = e.changedTouches[0].clientY - startY;
     
-    // Tap (Dokunma) algılama: Kısa süre ve az hareket
     const isTap = diffTime < 300 && Math.abs(diffX) < 10 && Math.abs(diffY) < 10;
-    // Aşağı kaydırma (Swipe Down) algılama
     const isSwipeDown = diffY > 30;
 
     if (state.mode === 'tesbih') {
-      // Tesbih modunda: Dokunma VEYA aşağı kaydırma ile bir sonraki boncuğa geçiş
       if (isTap || isSwipeDown) {
         state.count++;
         if (state.count > 99) state.count = 0; 
         updateVisuals();
-        if (navigator.vibrate) navigator.vibrate(40);
+        
+        // 33, 66 ve 99 da özel uyarı (Bip + Uzun/Çift Titreşim)
+        if (state.count === 33 || state.count === 66 || state.count === 99) {
+          if (navigator.vibrate) navigator.vibrate([100, 50, 100]); // Çift titreşim
+          playBeep();
+        } else {
+          if (navigator.vibrate) navigator.vibrate(40); // Normal titreşim
+        }
       }
-    } else {
-      // Zikirmatik modunda: swipe-zone'daki dokunma mantığı, dairesel diskin onclick'i tarafından yönetilir.
-      // Bu, menüye ulaşmayı engellemez.
     }
   });
 
   function handleZikirmatikTap() {
-    // Tıklama animasyonu
     const circle = document.getElementById('zikir-circle');
     circle.classList.add('tap-anim');
     setTimeout(() => circle.classList.remove('tap-anim'), 100);
 
     if (state.zikirCount > 0) {
       state.zikirCount--;
-      if (navigator.vibrate) navigator.vibrate(40);
+      
+      // Hedefe ulaşıldıysa (0 olduysa) özel uyarı
+      if (state.zikirCount === 0) {
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+        playBeep();
+      } else {
+        if (navigator.vibrate) navigator.vibrate(40);
+      }
+      
     } else {
-      // 0 iken basılırsa hedef sayıya geri döner (Reset)
+      // 0 iken basılırsa hedef sayıya geri döner
       state.zikirCount = state.zikirTarget;
-      if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
+      if (navigator.vibrate) navigator.vibrate(40);
     }
     updateVisuals(true);
   }
@@ -303,7 +322,6 @@
   function closeMenu() {
     document.getElementById('overlay').style.display = 'none';
     document.getElementById('menu').style.bottom = '-100%';
-    // Inputtan çıkılmasını sağlar (klavyeyi gizler)
     document.getElementById('zikir-input').blur();
   }
   
@@ -316,7 +334,7 @@
     const inputVal = parseInt(document.getElementById('zikir-input').value);
     if (!isNaN(inputVal) && inputVal > 0) {
       state.zikirTarget = inputVal;
-      state.zikirCount = inputVal; // Yeni hedef belirlenince sayacı da günceller
+      state.zikirCount = inputVal;
       updateVisuals(false);
       closeMenu();
     }
@@ -334,7 +352,11 @@
     updateVisuals(false); 
     closeMenu(); 
   }
-  // Service Worker Kaydı (PWA için)
+
+  window.onload = initApp;
+  window.onresize = () => updateVisuals(false);
+
+  // --- SERVICE WORKER (PWA) BAĞLANTISI ---
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js')
@@ -346,9 +368,6 @@
         });
     });
   }
-
-  window.onload = initApp;
-  window.onresize = () => updateVisuals(false);
 </script>
 </body>
 </html>
